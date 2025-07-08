@@ -1,0 +1,5 @@
+/home/ht-admin/Documents/Practice/Azure_Practice/AzureAppGatewayDemo/HelloWorldApp/publish/HelloWorldApp
+/home/ht-admin/Documents/Practice/Azure_Practice/AzureAppGatewayDemo/HelloWorldApp/publish/HelloWorldApp.dll
+/home/ht-admin/Documents/Practice/Azure_Practice/AzureAppGatewayDemo/HelloWorldApp/publish/HelloWorldApp.deps.json
+/home/ht-admin/Documents/Practice/Azure_Practice/AzureAppGatewayDemo/HelloWorldApp/publish/HelloWorldApp.runtimeconfig.json
+/home/ht-admin/Documents/Practice/Azure_Practice/AzureAppGatewayDemo/HelloWorldApp/publish/HelloWorldApp.pdb
