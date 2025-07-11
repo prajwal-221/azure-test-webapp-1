@@ -1,0 +1,80 @@
+# azure-pipelines.yml
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  azureSubscription: 'AzureSP-Demo'      # Your ARM service connection
+  resourceGroup: 'web-demo-rg'           # Must exist (or change to one you want)
+  location: 'Central US'                 # Pick your region
+  appServicePlan: 'helloworld-plan'      # New or existing
+  sku: 'F1'                            # Plan size (e.g. B1, P1v2)
+  appName: 'HelloWorldApp'               # Web App name (must be unique)
+  buildConfiguration: 'Release'
+
+stages:
+- stage: Build
+  displayName: 'Build & Publish'
+  jobs:
+  - job: BuildJob
+    steps:
+      - task: UseDotNet@2
+        inputs:
+          packageType: 'sdk'
+          version: '8.x'
+      - script: |
+          dotnet restore HelloWorldApp.csproj
+          dotnet build HelloWorldApp.csproj --configuration $(buildConfiguration)
+          dotnet publish HelloWorldApp.csproj --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/publish
+        displayName: 'Restore, Build & Publish'
+      - publish: $(Build.ArtifactStagingDirectory)/publish
+        artifact: drop
+
+- stage: Deploy
+  displayName: 'Provision & Deploy'
+  dependsOn: Build
+  jobs:
+  - deployment: DeployWeb
+    environment: 'production'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+            # 1) Provision App Service Plan & Web App if not exists
+            - task: AzureCLI@2
+              displayName: 'Provision App Service'
+              inputs:
+                azureSubscription: $(azureSubscription)
+                scriptType: bash
+                scriptLocation: inlineScript
+                inlineScript: |
+                  # Create resource group if missing
+                  az group create --name $(resourceGroup) --location "$(location)"
+                  # Create App Service Plan
+                  az appservice plan create \
+                    --name $(appServicePlan) \
+                    --resource-group $(resourceGroup) \
+                    --sku $(sku) \
+                    --is-linux false
+                  # Create Web App
+                  az webapp create \
+                    --name $(appName) \
+                    --resource-group $(resourceGroup) \
+                    --plan $(appServicePlan) \
+                    --runtime "DOTNET|8.0"
+
+            # 2) Download & Deploy artifact
+            - download: current
+              artifact: drop
+            - task: AzureWebApp@1
+              displayName: 'Deploy to App Service'
+              inputs:
+                azureSubscription: $(azureSubscription)
+                appType: 'webApp'
+                resourceGroupName: $(resourceGroup)
+                appName: $(appName)
+                package: $(Pipeline.Workspace)/drop
