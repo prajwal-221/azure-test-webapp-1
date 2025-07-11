@@ -5,7 +5,7 @@ trigger:
       - main
 
 pool:
-  name: Default         # or whatever pool you chose
+  name: Default         # Your self‑hosted pool name
   demands:
     - agent.name -equals test-vm-1
 
@@ -14,7 +14,7 @@ variables:
   resourceGroup: 'web-demo-rg'           # Must exist (or change to one you want)
   location: 'Central US'                 # Pick your region
   appServicePlan: 'helloworld-plan'      # New or existing
-  sku: 'F1'                            # Plan size (e.g. B1, P1v2)
+  sku: 'F1'                              # Free tier
   appName: 'HelloWorldApp'               # Web App name (must be unique)
   buildConfiguration: 'Release'
 
@@ -23,30 +23,36 @@ stages:
   displayName: 'Build & Publish'
   jobs:
   - job: BuildJob
+    displayName: 'Build .NET 8 App'
     steps:
       - task: UseDotNet@2
+        displayName: 'Install .NET 8 SDK'
         inputs:
           packageType: 'sdk'
           version: '8.x'
+
       - script: |
           dotnet restore HelloWorldApp.csproj
           dotnet build HelloWorldApp.csproj --configuration $(buildConfiguration)
           dotnet publish HelloWorldApp.csproj --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/publish
         displayName: 'Restore, Build & Publish'
+
       - publish: $(Build.ArtifactStagingDirectory)/publish
         artifact: drop
+        displayName: 'Publish Artifact'
 
 - stage: Deploy
   displayName: 'Provision & Deploy'
   dependsOn: Build
   jobs:
   - deployment: DeployWeb
+    displayName: 'Provision & Deploy Web App'
     environment: 'production'
     strategy:
       runOnce:
         deploy:
           steps:
-            # 1) Provision App Service Plan & Web App if not exists
+            # 1) Provision App Service Plan & Web App if missing
             - task: AzureCLI@2
               displayName: 'Provision App Service'
               inputs:
@@ -55,13 +61,16 @@ stages:
                 scriptLocation: inlineScript
                 inlineScript: |
                   # Create resource group if missing
-                  az group create --name $(resourceGroup) --location "$(location)"
-                  # Create App Service Plan
+                  az group create \
+                    --name $(resourceGroup) \
+                    --location "$(location)"
+
+                  # Create App Service Plan (Free tier)
                   az appservice plan create \
                     --name $(appServicePlan) \
                     --resource-group $(resourceGroup) \
-                    --sku $(sku) \
-                    --is-linux false
+                    --sku $(sku)
+
                   # Create Web App
                   az webapp create \
                     --name $(appName) \
@@ -72,6 +81,8 @@ stages:
             # 2) Download & Deploy artifact
             - download: current
               artifact: drop
+              displayName: 'Download Build Artifact'
+
             - task: AzureWebApp@1
               displayName: 'Deploy to App Service'
               inputs:
