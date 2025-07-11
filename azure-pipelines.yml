@@ -13,9 +13,9 @@ variables:
   azureSubscription: 'AzureSP‑Demo'      # Your ARM service connection
   resourceGroup: 'web-demo-rg'           # Must exist (or change to one you want)
   location: 'Central US'                 # Pick your region
-  appServicePlan: 'helloworld-plan'      # New or existing
+  appServicePlan: 'helloworld-plan-prajwal-221'      # New or existing
   sku: 'F1'                              # Free tier
-  appName: 'HelloWorldApp'               # Web App name (must be unique)
+  appName: 'HelloWorldApp-prajwal-221'               # Web App name (must be unique)
   buildConfiguration: 'Release'
 
 stages:
