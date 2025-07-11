@@ -10,7 +10,7 @@ pool:
 variables:
   azureSubscription: 'AzureSP‑Demo'      # Your ARM service connection
   resourceGroup: 'web-demo-rg'           # RG where your App Service already exists
-  appName: 'HelloWorldApp-prajwal-221'   # Exact name of your existing App Service
+  appName: 'HelloWorldApp'   # Exact name of your existing App Service
   buildConfiguration: 'Release'
 
 stages:
