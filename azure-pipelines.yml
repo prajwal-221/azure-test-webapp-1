@@ -5,17 +5,12 @@ trigger:
       - main
 
 pool:
-  name: Default         # Your self‑hosted pool name
-  demands:
-    - agent.name -equals test-vm-1
+  name: Default         # Your self‑hosted pool (or use vmImage: ubuntu-latest if you have hosted parallelism)
 
 variables:
-  azureSubscription: 'AzureSP‑Demo'      # Your ARM service connection
-  resourceGroup: 'web-demo-rg'           # Must exist (or change to one you want)
-  location: 'Central US'                 # Pick your region
-  appServicePlan: 'helloworld-plan-prajwal-221'      # New or existing
-  sku: 'F1'                              # Free tier
-  appName: 'HelloWorldApp-prajwal-221'               # Web App name (must be unique)
+  azureSubscription: 'AzureSP‑Demo'     # Name of your ARM service connection in DevOps
+  resourceGroup: 'web-demo-rg'          # RG where your App Service lives
+  appName: 'HelloWorldApp'              # Exact name of your existing App Service
   buildConfiguration: 'Release'
 
 stages:
@@ -26,10 +21,10 @@ stages:
     displayName: 'Build .NET 8 App'
     steps:
       - task: UseDotNet@2
-        displayName: 'Install .NET 8 SDK'
         inputs:
           packageType: 'sdk'
           version: '8.x'
+        displayName: 'Install .NET 8 SDK'
 
       - script: |
           dotnet restore HelloWorldApp.csproj
@@ -42,43 +37,16 @@ stages:
         displayName: 'Publish Artifact'
 
 - stage: Deploy
-  displayName: 'Provision & Deploy'
+  displayName: 'Deploy to App Service'
   dependsOn: Build
   jobs:
   - deployment: DeployWeb
-    displayName: 'Provision & Deploy Web App'
+    displayName: 'Deploy Artifact'
     environment: 'production'
     strategy:
       runOnce:
         deploy:
           steps:
-            # 1) Provision App Service Plan & Web App if missing
-            - task: AzureCLI@2
-              displayName: 'Provision App Service'
-              inputs:
-                azureSubscription: $(azureSubscription)
-                scriptType: bash
-                scriptLocation: inlineScript
-                inlineScript: |
-                  # Create resource group if missing
-                  az group create \
-                    --name $(resourceGroup) \
-                    --location "$(location)"
-
-                  # Create App Service Plan (Free tier)
-                  az appservice plan create \
-                    --name $(appServicePlan) \
-                    --resource-group $(resourceGroup) \
-                    --sku $(sku)
-
-                  # Create Web App
-                  az webapp create \
-                    --name $(appName) \
-                    --resource-group $(resourceGroup) \
-                    --plan $(appServicePlan) \
-                    --runtime "DOTNET|8.0"
-
-            # 2) Download & Deploy artifact
             - download: current
               artifact: drop
               displayName: 'Download Build Artifact'
@@ -87,7 +55,7 @@ stages:
               displayName: 'Deploy to App Service'
               inputs:
                 azureSubscription: $(azureSubscription)
-                appType: 'webApp'
+                appType: 'webApp'               # or 'webAppLinux' if your App Service is Linux
                 resourceGroupName: $(resourceGroup)
                 appName: $(appName)
-                package: $(Pipeline.Workspace)/drop
+                package: $(Pipeline.Workspace)/drop/publish
