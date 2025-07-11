@@ -5,12 +5,12 @@ trigger:
       - main
 
 pool:
-  name: Default         # Your self‑hosted pool (or use vmImage: ubuntu-latest if you have hosted parallelism)
+  name: Default         # Your self‑hosted pool name (or vmImage: ubuntu-latest)
 
 variables:
-  azureSubscription: 'AzureSP‑Demo'     # Name of your ARM service connection in DevOps
-  resourceGroup: 'web-demo-rg'          # RG where your App Service lives
-  appName: 'HelloWorldApp'              # Exact name of your existing App Service
+  azureSubscription: 'AzureSP‑Demo'      # Your ARM service connection
+  resourceGroup: 'web-demo-rg'           # RG where your App Service already exists
+  appName: 'HelloWorldApp-prajwal-221'   # Exact name of your existing App Service
   buildConfiguration: 'Release'
 
 stages:
@@ -21,15 +21,17 @@ stages:
     displayName: 'Build .NET 8 App'
     steps:
       - task: UseDotNet@2
+        displayName: 'Install .NET 8 SDK'
         inputs:
           packageType: 'sdk'
           version: '8.x'
-        displayName: 'Install .NET 8 SDK'
 
       - script: |
           dotnet restore HelloWorldApp.csproj
           dotnet build HelloWorldApp.csproj --configuration $(buildConfiguration)
-          dotnet publish HelloWorldApp.csproj --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/publish
+          dotnet publish HelloWorldApp.csproj \
+            --configuration $(buildConfiguration) \
+            --output $(Build.ArtifactStagingDirectory)/publish
         displayName: 'Restore, Build & Publish'
 
       - publish: $(Build.ArtifactStagingDirectory)/publish
