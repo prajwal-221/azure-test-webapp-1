@@ -8,7 +8,7 @@ pool:
   vmImage: ubuntu-latest
 
 variables:
-  azureSubscription: 'AzureSP-Demo'      # Your ARM service connection
+  azureSubscription: 'AzureSP‑Demo'      # Your ARM service connection
   resourceGroup: 'web-demo-rg'           # Must exist (or change to one you want)
   location: 'Central US'                 # Pick your region
   appServicePlan: 'helloworld-plan'      # New or existing
