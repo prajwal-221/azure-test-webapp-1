@@ -5,7 +5,9 @@ trigger:
       - main
 
 pool:
-  vmImage: ubuntu-latest
+  name: Default         # or whatever pool you chose
+  demands:
+    - agent.name -equals test-vm-1
 
 variables:
   azureSubscription: 'AzureSP‑Demo'      # Your ARM service connection
